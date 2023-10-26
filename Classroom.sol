@@ -74,7 +74,13 @@ contract GoogleClassroom {
 
   // Submit homework
   function submit_homework(string memory class_name,string memory _work,string memory student_name) public payable {
-   check[class_name][ _work][student_name]=true;
+   for(uint i=0;i<classlist[class_name].length;i++){
+     if( keccak256(abi.encodePacked(classlist[class_name][i].name))==keccak256(abi.encodePacked(student_name))){
+       check[class_name][ _work][student_name]=true;
+       break;
+     }
+   }
+   
   }
 }
 
