@@ -71,6 +71,11 @@ contract GoogleClassroom {
    function view_students(string memory class_name) public payable returns(Student[] memory) {
     return classlist[class_name];
   }
+
+  // Submit homework
+  function submit_homework(string memory class_name,string memory _work,string memory student_name) public payable {
+   check[class_name][ _work][student_name]=true;
+  }
 }
 
 
