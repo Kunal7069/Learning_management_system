@@ -62,6 +62,14 @@ contract GoogleClassroom {
   function add_homework(string memory teacher_name,string memory class_name,string memory _work,string memory postdate,string memory duedate) public payable {
     require(teacher_access[teacher_name]==msg.sender,"ACCESS DENIED"); 
     home_work[teacher_name][class_name].push(Homework({work:_work,post_date:postdate,due_date:duedate}));
+    for(uint i=0;i<classlist[class_name].length;i++){
+      check[class_name][ _work][(classlist[class_name][i]).name]=false;
+    }
+  }
+
+  // View students of any class
+   function view_students(string memory class_name) public payable returns(Student[] memory) {
+    return classlist[class_name];
   }
 }
 
