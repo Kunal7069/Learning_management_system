@@ -29,10 +29,12 @@ contract GoogleClassroom {
   mapping(string=>address) public teacher_access; 
   mapping(string=>address) public student_access; 
   mapping(string=>string) public classcode; // Which class has what code...
+  mapping(string=>uint) public no_classes; // Record no of classes
   mapping(string=>Classroom[]) public classroomlist; // List of classrooms teachers wise
   mapping(string=>Student[]) public classlist; // List of students in each class
   mapping(string=>mapping(string=>Homework[])) public home_work; // List of homework teacher and class wise
   mapping(string=>mapping(string=>mapping(string=>bool))) public check; // To check whether student submitted the work or not 
+  mapping(string=>mapping(string=>uint)) public attendance; //To maintain attendance
   
   function teacher_signup(string memory _name,string memory _password) public payable {
     teacher.push(Teacher({name: _name,password: _password}));
@@ -80,8 +82,23 @@ contract GoogleClassroom {
        break;
      }
    }
-   
   }
+
+   // Book a Class Slot
+  function book_class(string memory class_name) public payable{
+    no_classes[class_name]=no_classes[class_name]+1; 
+  }
+   
+  // Mark the attendance
+  function mark_attendance(string memory class_name,string memory student_name) public payable{
+       attendance[class_name][student_name]=attendance[class_name][student_name]+1;
+  }
+
+  // View the attendance
+  function view_attendance(string memory class_name,string memory student_name) public view returns(uint){
+      return attendance[class_name][student_name];
+  }
+
 }
 
 
