@@ -91,7 +91,12 @@ contract GoogleClassroom {
    
   // Mark the attendance
   function mark_attendance(string memory class_name,string memory student_name) public payable{
+       for(uint i=0;i<classlist[class_name].length;i++){
+     if( keccak256(abi.encodePacked(classlist[class_name][i].name))==keccak256(abi.encodePacked(student_name))){
        attendance[class_name][student_name]=attendance[class_name][student_name]+1;
+       break;
+     }
+   }  
   }
 
   // View the attendance
