@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0
-
 pragma solidity >=0.7.0 <0.9.0;
 
 contract GoogleClassroom {
@@ -28,17 +27,17 @@ contract GoogleClassroom {
   Homework[] homework;
   mapping(string=>address) public teacher_access; 
   mapping(string=>address) public student_access; 
-  mapping(string=>string) public classcode; // Which class has what code...
-  mapping(string=>uint) public no_classes; // Record no of classes
+  mapping(string=>mapping(string=>string)) public classcode; // Which class has what code...  
+  mapping(string=>mapping(string=>uint)) public no_classes; // Record no of classes 
   mapping(string=>Classroom[]) public classroomlist; // List of classrooms teachers wise
-  mapping(string=>Student[]) public classlist; // List of students in each class
+  mapping(string=>mapping(string=>Student[])) public classlist; // List of students in each class
   mapping(string=>mapping(string=>Homework[])) public home_work; // List of homework teacher and class wise
-  mapping(string=>mapping(string=>mapping(string=>bool))) public check; // To check whether student submitted the work or not 
-  mapping(string=>mapping(string=>uint)) public attendance; //To maintain attendance
-  
+  mapping(string=>mapping(string=>mapping(string=>mapping(string=>bool)))) public check; // To check whether student submitted the work or not 
+  mapping(string=>mapping(string=>mapping(string=>uint))) public attendance; // To maintain attendance
+
   function teacher_signup(string memory _name,string memory _password) public payable {
     teacher.push(Teacher({name: _name,password: _password}));
-    teacher_access[_name]=msg.sender;
+    teacher_access[_name]=msg.sender;  
   }
   
   function student_signup(string memory _name,string memory _password) public payable {
@@ -47,61 +46,64 @@ contract GoogleClassroom {
   }
   
   // Teacher create classroom
-  function create_classroom(string memory _name,string memory _classname,string memory _classcode) public payable {
+  function create_classroom(string memory teacher_name,string memory _name,string memory _classname,string memory _classcode) public payable {
     require(teacher_access[_name]==msg.sender,"ACCESS DENIED");
     classroomlist[_name].push(Classroom({classname:_classname,classcode:_classcode}));
-    classcode[_classname]=_classcode;
+    classcode[teacher_name][_classname]=_classcode;
+    no_classes[teacher_name][_classname]=0;
+    
   }
  
  // Add in classroom 
-  function add_in_classroom(string memory class_name,string memory student_name,string memory student_password) public payable {
+  function add_in_classroom(string memory teacher_name,string memory class_name,string memory student_name,string memory student_password) public payable {
     // require(classcode[class_name]==class_code,"WRONG INFO");
     require(student_access[student_name]==msg.sender,"ACCESS DENIED");
-    classlist[class_name].push(Student({name:student_name,password:student_password}));
+    classlist[teacher_name][class_name].push(Student({name:student_name,password:student_password}));
   }
 
   // Add homework in classroom
   function add_homework(string memory teacher_name,string memory class_name,string memory _work,string memory postdate,string memory duedate) public payable {
     require(teacher_access[teacher_name]==msg.sender,"ACCESS DENIED"); 
     home_work[teacher_name][class_name].push(Homework({work:_work,post_date:postdate,due_date:duedate}));
-    for(uint i=0;i<classlist[class_name].length;i++){
-      check[class_name][ _work][(classlist[class_name][i]).name]=false;
+    for(uint i=0;i<classlist[teacher_name][class_name].length;i++){
+      check[teacher_name][class_name][ _work][(classlist[teacher_name][class_name][i]).name]=false;
     }
   }
 
   // View students of any class
-   function view_students(string memory class_name) public payable returns(Student[] memory) {
-    return classlist[class_name];
+   function view_students(string memory teacher_name,string memory class_name) public view returns(Student[] memory) {
+    return classlist[teacher_name][class_name];
   }
 
   // Submit homework
-  function submit_homework(string memory class_name,string memory _work,string memory student_name) public payable {
-   for(uint i=0;i<classlist[class_name].length;i++){
-     if( keccak256(abi.encodePacked(classlist[class_name][i].name))==keccak256(abi.encodePacked(student_name))){
-       check[class_name][ _work][student_name]=true;
+  function submit_homework(string memory teacher_name,string memory class_name,string memory _work,string memory student_name) public payable {
+   for(uint i=0;i<classlist[teacher_name][class_name].length;i++){
+     if( keccak256(abi.encodePacked(classlist[teacher_name][class_name][i].name))==keccak256(abi.encodePacked(student_name))){
+       check[teacher_name][class_name][ _work][student_name]=true;
        break;
      }
    }
   }
 
-   // Book a Class Slot
-  function book_class(string memory class_name) public payable{
-    no_classes[class_name]=no_classes[class_name]+1; 
+  // Book a Class Slot
+  function book_class(string memory teacher_name,string memory class_name) public payable{
+    no_classes[teacher_name][class_name]=no_classes[teacher_name][class_name]+1; 
   }
    
   // Mark the attendance
-  function mark_attendance(string memory class_name,string memory student_name) public payable{
-       for(uint i=0;i<classlist[class_name].length;i++){
-     if( keccak256(abi.encodePacked(classlist[class_name][i].name))==keccak256(abi.encodePacked(student_name))){
-       attendance[class_name][student_name]=attendance[class_name][student_name]+1;
+  function mark_attendance(string memory teacher_name,string memory class_name,string memory student_name) public payable{
+    for(uint i=0;i<classlist[teacher_name][class_name].length;i++){
+     if( keccak256(abi.encodePacked(classlist[teacher_name][class_name][i].name))==keccak256(abi.encodePacked(student_name))){
+       attendance[teacher_name][class_name][student_name]=attendance[teacher_name][class_name][student_name]+1;
        break;
      }
    }  
   }
 
   // View the attendance
-  function view_attendance(string memory class_name,string memory student_name) public view returns(uint){
-      return attendance[class_name][student_name];
+  function view_attendance(string memory teacher_name,string memory class_name,string memory student_name) public view returns(uint){
+
+    return (attendance[teacher_name][class_name][student_name]*100)/no_classes[teacher_name][class_name];
   }
 
 }
